@@ -150,13 +150,13 @@ legend.onAdd = function (myMap) {
 
     var div = L.DomUtil.create('div', 'info legend'),
         grades = colorBounds,
-        labels = [];
+        labels = ["low", "med-low", "med-high", ];
 
     // loop through our density intervals and generate a label with a colored square for each interval
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
-            '<i style="background:' + getFillColor(grades[i] + 1, grades) + '"></i> ' +
-            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            '<i style="background:' + getFillColor(grades[i]-   1 , grades) + '"></i> ' +
+            "<"+grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
     }
 
     return div;
