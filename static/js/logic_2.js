@@ -6,23 +6,24 @@ var USGS_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&
 "2019-01-07&maxlongitude=-45.00&minlongitude=-165.00&maxlatitude=45.00&minlatitude=0";
 
 d3.json(USGS_URL).then(function(response) {
+    console.log(response.features)
     createFeatures(response.features);
 
 });
 
 function createFeatures(earthquakeData) {
 
-  
+  //color scale for depth of earquake
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
     pointToLayer: function(feature, latlng) {	
         
         		return L.circleMarker(latlng, { 
-        			 fillColor: "blue",
+        			 fillColor: getFillColor(feature.geometry.coordinates[2]),
         			 color: 'black',
                      weight: 1, 
-                     radius: 5,
+                     radius: feature.properties.mag*3,
         			 fillOpacity: 0.6 
         			    }).on({
                             mouseover: function(e) {
@@ -37,10 +38,37 @@ function createFeatures(earthquakeData) {
                             },
                         })
             }
+            //updateSymbols
         });
   console.log("heres the earthquakes data");
   console.log(earthquakes);
-  
+
+  function getFillColor(depth) {
+      console.log(`${depth} which is ${typeof(depth)}`);
+      switch(true) {
+        case(depth <5):
+            color = "blue";
+            return color;
+        break; 
+        case(depth <10):
+            color = "green";
+            return color;
+        break;
+        case(depth <15):
+            color = "yellow";
+            return color;
+        break;
+        case(depth <20):
+            color = "orange";
+            return color;
+        break;
+        default:
+            color = "red";
+            return color;
+        break;
+      }
+
+  }
   // Sending our earthquakes layer to the createMap function
   createMap(earthquakes);
 };
