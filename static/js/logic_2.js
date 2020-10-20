@@ -24,7 +24,18 @@ function createFeatures(earthquakeData) {
                      weight: 1, 
                      radius: 5,
         			 fillOpacity: 0.6 
-        			    });
+        			    }).on({
+                            mouseover: function(e) {
+                                this.openPopup();
+                                this.setStyle({color: "yellow",
+                                                radius: 10});
+                            },
+                            mouseout: function(e) {
+                                this.closePopup();
+                                this.setStyle({color: "black",
+                                                radius: 5});
+                            },
+                        })
             }
         });
   console.log("heres the earthquakes data");
