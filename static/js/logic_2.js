@@ -73,22 +73,22 @@ function createFeatures(earthquakeData) {
                                                 fillOpacity:1});
                             },
                         })
-            }
-            //popup details
-            // popUpDetails(feature), 
+            },
+            onEachFeature: function(feature, layer){
+              var place = feature.properties.place;
+              var date = new Date(feature.properties.time)
+              var mag = feature.properties.mag;
+              var popUp = "<h3>" + place +"</h3><hr><p>" + date + "<hr>"+mag+"</p>"
+              layer.bindPopup(popUp, {offset: new L.Point(0, 5)});
+            },
+            interactive:true
+            
         });
 
 
-    // function popUpDetails(feature) {
-        earthquakes.eachLayer(function(layer) {
-            var place = feature.properties.place;
-            var date = new Date(feature.properties.time)
-            var mag = feature.properties.mag;
-            var popUp = "<h3>" + place +"</h3><hr><p>" + date + "<hr>"+mag+"</p>"
-            layer.bindPopup(popUp, {offset: new L.Point(0, 5)});
-    });
+   
 
-    // };
+    //  };
   // Sending our earthquakes layer to the createMap function
   createMap(earthquakes);
 };
@@ -121,24 +121,19 @@ function createMap(earthquakes) {
     "Dark Map": darkmap
   };
  
- plateFile = "/static/js/tectonic_plates.json"
-//   tectonic = L.geoJson(plateFile.responseJSON., {
-//     style: {weight: 5,
-//             opacity: 1, 
-//             color: 'black',
-//             fillOpacity: 1},
-   
-// });
 
+plateFile = "/static/js/tectonic_plates.json"
 tectonic = new L.layerGroup();
 
 d3.json(plateFile).then(function(response) {
   console.log(response.features);
   L.geoJson(response, {
     type: tectonic,
+    interactive: false,
     style: {weight: 3,
-            opacity: 1, 
-             color: 'black'}
+            opacity: 0.5, 
+            color: 'yellow',
+            fillColor: ""}
   }).addTo(tectonic)
   });
 
@@ -152,7 +147,7 @@ d3.json(plateFile).then(function(response) {
   };
   
   
-  // Create our map, giving it the streetmap and earthquakes layers to display on load
+  //Create our map, giving it the streetmap and earthquakes layers to display on load
   var myMap = L.map("mapid", {
     center: [
       37.09, -95.71
@@ -161,6 +156,10 @@ d3.json(plateFile).then(function(response) {
     layers: [streetmap,  tectonic, earthquakes]
   });
 
+  // var myMap = l.Wrld.map("map",{
+  
+  //           center:[37.09, -95.71],
+  //           zoom: 15 });
   
   
   //Create a layer control
