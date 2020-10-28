@@ -12,7 +12,6 @@ console.log("Checking Communications");
 
 
 
-
 var cities = [
     {
       name: "New York",
@@ -73,15 +72,21 @@ var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}
       "Street Map": streetmap,
       "Dark Map": darkmap
     };
-   
+    
+    plateFile = 'tectonic_plates.json'
+    var tectonic = new L.layerGroup()
+    L.geoJson(plateFile.responseJSON).addTo(tectonic)
+
     // Create our map, giving it the streetmap and earthquakes layers to display on load
     var myMap = L.map("mapid", {
         center: [
           37.09, -95.71
         ],
         zoom: 5,
-        layers: [streetmap]
+        layers: [streetmap, tectonic]
       });
+
+      
 
       for (var i = 0; i < cities.length; i++) {
         L.circle(cities[i].location, {

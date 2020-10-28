@@ -2,26 +2,26 @@
 
 console.log("Checking Communications");
 
-var USGS_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2019-01-01&endtime=" +
-"2019-01-07&maxlongitude=-45.00&minlongitude=-165.00&maxlatitude=45.00&minlatitude=0";
 
-function getFillColor(depth, colorBounds) {
-    console.log(`${depth} which is ${typeof(depth)}`);
+
+function getFillColor(depth) {
+    //console.log(`${depth} which is ${typeof(depth)}`);
+    var colorBounds = [5,10,15,20]
     switch(true) {
       case(depth <colorBounds[0]):
-          color = "blue";
+          color = '#FED976';
           return color;
       break; 
       case(depth <colorBounds[1]):
-          color = "green";
+          color = '#FD8D3C';
           return color;
       break;
       case(depth <colorBounds[2]):
-          color = "yellow";
+          color = '#E31A1C';
           return color;
       break;
       case(depth <colorBounds[4]):
-          color = "orange";
+          color = '#800026';
           return color;
       break;
       default:
@@ -32,6 +32,8 @@ function getFillColor(depth, colorBounds) {
 
 }
 
+var USGS_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2019-01-01&endtime=" +
+"2019-01-07&maxlongitude=-45.00&minlongitude=-165.00&maxlatitude=45.00&minlatitude=0";
 
 d3.json(USGS_URL).then(function(response) {
     console.log(response.features)
@@ -46,36 +48,38 @@ function createFeatures(earthquakeData) {
   //color scale for depth of earquake
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
-  var colorBounds = [5,10,15,20]
+  
   var earthquakes = L.geoJSON(earthquakeData, {
-      
+    
     pointToLayer: function(feature, latlng) {	
-                const colorBounds = [5,10,15,20];
-                return L.circleMarker(latlng, { 
-        			 fillColor: getFillColor(feature.geometry.coordinates[2], colorBounds),
+                
+              return L.circleMarker(latlng, { 
+        			 fillColor: getFillColor(feature.geometry.coordinates[2]),
         			 color: 'black',
-                     weight: 1, 
+                     weight: 0.5, 
                      radius: feature.properties.mag*3,
-        			 fillOpacity: 0.4 
+        			 fillOpacity: 1 
         			    }).on({
                             mouseover: function(e) {
                                 this.openPopup();
                                 this.setStyle({weight: 2,
+                                              fillColor: 'black',
                                                 fillOpacity:1});
                             },
                             mouseout: function(e) {
                                 this.closePopup();
-                                this.setStyle({weight: 1,
-                                                fillOpacity:0.4});
+                                this.setStyle({weight: 0.5,
+                                                fillColor: getFillColor(feature.geometry.coordinates[2]),
+                                                fillOpacity:1});
                             },
                         })
             }
             //popup details
-            //popUpDetails(feature);
+            // popUpDetails(feature), 
         });
 
 
-    function popUpDetails(feature) {
+    // function popUpDetails(feature) {
         earthquakes.eachLayer(function(layer) {
             var place = feature.properties.place;
             var date = new Date(feature.properties.time)
@@ -84,14 +88,16 @@ function createFeatures(earthquakeData) {
             layer.bindPopup(popUp, {offset: new L.Point(0, 5)});
     });
 
-    };
+    // };
   // Sending our earthquakes layer to the createMap function
-  createMap(earthquakes, colorBounds);
+  createMap(earthquakes);
 };
 
-function createMap(earthquakes, colorBounds) {
 
-  console.log(colorBounds);
+//***********************Creating Map from Data********************* */
+function createMap(earthquakes) {
+
+  
   // Define streetmap and darkmap layers
   var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -115,11 +121,33 @@ function createMap(earthquakes, colorBounds) {
     "Dark Map": darkmap
   };
  
-  
+ plateFile = "/static/js/tectonic_plates.json"
+//   tectonic = L.geoJson(plateFile.responseJSON., {
+//     style: {weight: 5,
+//             opacity: 1, 
+//             color: 'black',
+//             fillOpacity: 1},
+   
+// });
 
+tectonic = new L.layerGroup();
+
+d3.json(plateFile).then(function(response) {
+  console.log(response.features);
+  L.geoJson(response, {
+    type: tectonic,
+    style: {weight: 3,
+            opacity: 1, 
+             color: 'black'}
+  }).addTo(tectonic)
+  });
+
+
+//console.log(tectonic)
   // Create overlay object to hold our overlay layer
   var overlayMaps = {
-    Earthquakes: earthquakes
+    "Earthquakes": earthquakes,
+    "Tectonic Plate": tectonic
     
   };
   
@@ -130,9 +158,11 @@ function createMap(earthquakes, colorBounds) {
       37.09, -95.71
     ],
     zoom: 4,
-    layers: [streetmap, earthquakes]
+    layers: [streetmap,  tectonic, earthquakes]
   });
- 
+
+  
+  
   //Create a layer control
   //Pass in our baseMaps and overlayMaps
   //Add the layer control to the map
@@ -140,28 +170,24 @@ function createMap(earthquakes, colorBounds) {
     collapsed: false
   }).addTo(myMap);
 
-grades = colorBounds;
-console.log(`grades ${grades}`);
-c = getFillColor(10,grades);
-console.log(c);
-var legend = L.control({position: 'bottomright'});
+// tectonic.addTo(myMap);
 
-legend.onAdd = function (myMap) {
-
-    var div = L.DomUtil.create('div', 'info legend'),
-        grades = colorBounds,
-        labels = ["low", "med-low", "med-high", ];
-
-    // loop through our density intervals and generate a label with a colored square for each interval
-    for (var i = 0; i < grades.length; i++) {
-        div.innerHTML +=
-            '<i style="background:' + getFillColor(grades[i]-   1 , grades) + '"></i> ' +
-            "<"+grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-    }
-
+  //Creating Legend based on color scale;
+  var legend = L.control({position: 'bottomright'});
+  legend.onAdd = function () {
+    colorBounds = [5,10,15,20];    
+    categories = [`0-${colorBounds[0]}`,`${colorBounds[0]}-${colorBounds[1]}`,`${colorBounds[1]}-${colorBounds[2]}`,`${colorBounds[2]}-${colorBounds[3]}`];
+    var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += "<p><strong>Earth Quake Depth</strong></p>"   
+        // loop through our density intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < colorBounds.length; i++) {
+          div.innerHTML +=
+                '<i style="background:' + getFillColor(colorBounds[i]) + '"></i> ' +
+                (categories[i]?categories[i]+'<br>': '+');
+          }
     return div;
-};
-
-legend.addTo(myMap);
+      
+      };
+  legend.addTo(myMap);
 
 };
