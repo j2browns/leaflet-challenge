@@ -132,6 +132,7 @@ var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}
       37.09, -95.71
     ],
     zoom: 4,
+    minZoom: 3,
     layers: [streetmap,  tectonic, earthquakes]
   });
 
